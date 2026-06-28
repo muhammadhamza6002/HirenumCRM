@@ -71,6 +71,7 @@ export default function ProfileDashboard() {
     company: "",
     role: "",
     industry: "",
+    email: "",
     source: "outbound",
     comment_text: "",
     notes: "",
@@ -108,8 +109,9 @@ export default function ProfileDashboard() {
     const { error } = await supabase.from("contacts").insert({
       profile_id: profile.id,
       ...form,
+      email_source: form.email ? "manual" : null,
       score,
-      stage: form.source === "post_engagement" ? "not_contacted" : "not_contacted",
+      stage: "not_contacted",
     });
     if (!error) {
       setForm({
@@ -118,6 +120,7 @@ export default function ProfileDashboard() {
         company: "",
         role: "",
         industry: "",
+        email: "",
         source: "outbound",
         comment_text: "",
         notes: "",
@@ -161,6 +164,8 @@ export default function ProfileDashboard() {
       company: aiResult.company,
       role: aiResult.role,
       industry: aiResult.industry,
+      email: aiResult.email || null,
+      email_source: aiResult.email ? "apollo" : null,
       source: "outbound",
       score: aiResult.score,
       draft_message: editedMessage,
@@ -317,6 +322,10 @@ export default function ProfileDashboard() {
                   <div className="text-xs text-slate-400">Industry</div>
                   <div className="text-sm font-medium text-ink">{aiResult.industry || "—"}</div>
                 </div>
+                <div className="col-span-2 md:col-span-4">
+                  <div className="text-xs text-slate-400">Email {aiResult.email && <span className="ml-1 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-black" style={{ backgroundColor: "#FBFF3A" }}>APOLLO</span>}</div>
+                  <div className="text-sm font-medium text-ink">{aiResult.email || "— (none found in pasted text)"}</div>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 mb-4">
@@ -373,6 +382,7 @@ export default function ProfileDashboard() {
           <Input label="Company" value={form.company} onChange={(v) => setForm({ ...form, company: v })} />
           <Input label="Role / Title" value={form.role} onChange={(v) => setForm({ ...form, role: v })} />
           <Input label="Industry" value={form.industry} onChange={(v) => setForm({ ...form, industry: v })} />
+          <Input label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
           <div>
             <label className="text-xs text-slate-500 block mb-1">Source</label>
             <select
@@ -440,6 +450,17 @@ export default function ProfileDashboard() {
               <Input label="Company" value={editingContact.company || ""} onChange={(v) => setEditingContact({ ...editingContact, company: v })} />
               <Input label="Role" value={editingContact.role || ""} onChange={(v) => setEditingContact({ ...editingContact, role: v })} />
               <Input label="Industry" value={editingContact.industry || ""} onChange={(v) => setEditingContact({ ...editingContact, industry: v })} />
+              <Input label="Email" value={editingContact.email || ""} onChange={(v) => setEditingContact({ ...editingContact, email: v })} />
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">Email Source</label>
+                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  value={editingContact.email_source || ""}
+                  onChange={(e) => setEditingContact({ ...editingContact, email_source: e.target.value || null })}>
+                  <option value="">— (no email)</option>
+                  <option value="apollo">Apollo</option>
+                  <option value="manual">Manual</option>
+                </select>
+              </div>
               <div>
                 <label className="text-xs text-slate-500 block mb-1">Score</label>
                 <input type="number" min="0" max="100" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
@@ -489,6 +510,7 @@ export default function ProfileDashboard() {
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Company / Role</th>
+              <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Source</th>
               <th className="px-4 py-3">Score</th>
               <th className="px-4 py-3">Stage</th>
@@ -514,6 +536,21 @@ export default function ProfileDashboard() {
                 </td>
                 <td className="px-4 py-3 text-slate-600">
                   {c.company || "—"} {c.role ? `· ${c.role}` : ""}
+                </td>
+                <td className="px-4 py-3">
+                  {c.email ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-700">{c.email}</span>
+                      {c.email_source === "apollo" && (
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-black" style={{ backgroundColor: "#FBFF3A" }}>APOLLO</span>
+                      )}
+                      {c.email_source === "manual" && (
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-200 text-slate-600">MANUAL</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-300">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-slate-500">
                   {SOURCES.find((s) => s.value === c.source)?.label}
@@ -577,7 +614,7 @@ export default function ProfileDashboard() {
             ))}
             {contacts.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                   No contacts yet. Add your first one above.
                 </td>
               </tr>

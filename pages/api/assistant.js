@@ -188,12 +188,16 @@ You must read the pasted LinkedIn profile text in FULL detail and extract every 
 
 Use the MOST SPECIFIC technical detail you can find. Generic openers like "saw your work in the industry" are BANNED. The hook MUST cite something concrete from their profile.
 
+EMAIL EXTRACTION:
+If the pasted text contains an email address (e.g. from Apollo extension output, or written anywhere), extract it. If no email is present, return an empty string. Do NOT invent or guess emails. Only return what is literally in the text.
+
 You must respond with a JSON object (raw JSON, no markdown, no code fences) with this exact shape:
 {
   "name": "Full name extracted from profile",
   "company": "Company name or empty string",
   "role": "Job title or empty string",
   "industry": "Industry guess based on company/role",
+  "email": "Email address if literally present in the pasted text, otherwise empty string",
   "fit": "strong" | "weak" | "not_fit",
   "fit_reason": "One short sentence explaining the fit verdict",
   "score": <integer 0-100>,
