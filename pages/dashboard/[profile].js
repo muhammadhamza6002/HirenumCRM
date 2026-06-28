@@ -62,6 +62,8 @@ export default function ProfileDashboard() {
   const [aiResult, setAiResult] = useState(null);
   const [aiError, setAiError] = useState("");
   const [editedMessage, setEditedMessage] = useState("");
+  const [openMenu, setOpenMenu] = useState(null);
+  const [editingContact, setEditingContact] = useState(null);
   const [form, setForm] = useState({
     name: "",
     linkedin_url: "",
@@ -172,6 +174,29 @@ export default function ProfileDashboard() {
     setAiResult(null);
     setEditedMessage("");
     setShowAI(false);
+    loadAll();
+  }
+
+  async function deleteContact(id) {
+    if (!confirm("Delete this contact? This cannot be undone.")) return;
+    const { error } = await supabase.from("contacts").delete().eq("id", id);
+    if (error) alert(error.message);
+    setOpenMenu(null);
+    loadAll();
+  }
+
+  async function saveEditedContact() {
+    if (!editingContact) return;
+    const { id, ...fields } = editingContact;
+    const { error } = await supabase
+      .from("contacts")
+      .update({ ...fields, updated_at: new Date() })
+      .eq("id", id);
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    setEditingContact(null);
     loadAll();
   }
 
@@ -377,6 +402,59 @@ export default function ProfileDashboard() {
         </form>
       )}
 
+      {editingContact && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setEditingContact(null)}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-ink mb-4">Edit Contact</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <Input label="Name" value={editingContact.name || ""} onChange={(v) => setEditingContact({ ...editingContact, name: v })} />
+              <Input label="LinkedIn URL" value={editingContact.linkedin_url || ""} onChange={(v) => setEditingContact({ ...editingContact, linkedin_url: v })} />
+              <Input label="Company" value={editingContact.company || ""} onChange={(v) => setEditingContact({ ...editingContact, company: v })} />
+              <Input label="Role" value={editingContact.role || ""} onChange={(v) => setEditingContact({ ...editingContact, role: v })} />
+              <Input label="Industry" value={editingContact.industry || ""} onChange={(v) => setEditingContact({ ...editingContact, industry: v })} />
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">Score</label>
+                <input type="number" min="0" max="100" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  value={editingContact.score || 0}
+                  onChange={(e) => setEditingContact({ ...editingContact, score: parseInt(e.target.value) || 0 })} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">Source</label>
+                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  value={editingContact.source || "outbound"}
+                  onChange={(e) => setEditingContact({ ...editingContact, source: e.target.value })}>
+                  {SOURCES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">Stage</label>
+                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  value={editingContact.stage || "not_contacted"}
+                  onChange={(e) => setEditingContact({ ...editingContact, stage: e.target.value })}>
+                  {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="text-xs text-slate-500 block mb-1">Draft Message</label>
+              <textarea className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[120px]"
+                value={editingContact.draft_message || ""}
+                onChange={(e) => setEditingContact({ ...editingContact, draft_message: e.target.value })} />
+            </div>
+            <div className="mb-5">
+              <label className="text-xs text-slate-500 block mb-1">Notes</label>
+              <textarea className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[80px]"
+                value={editingContact.notes || ""}
+                onChange={(e) => setEditingContact({ ...editingContact, notes: e.target.value })} />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setEditingContact(null)} className="px-4 py-2 text-sm rounded-lg text-slate-600 hover:bg-slate-100">Cancel</button>
+              <button onClick={saveEditedContact} className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90">Save changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-500 text-left">
@@ -387,6 +465,7 @@ export default function ProfileDashboard() {
               <th className="px-4 py-3">Score</th>
               <th className="px-4 py-3">Stage</th>
               <th className="px-4 py-3">Sentiment</th>
+              <th className="px-4 py-3 w-10"></th>
             </tr>
           </thead>
           <tbody>
@@ -440,11 +519,43 @@ export default function ProfileDashboard() {
                     ))}
                   </select>
                 </td>
+                <td className="px-4 py-3 relative">
+                  <button
+                    onClick={() => setOpenMenu(openMenu === c.id ? null : c.id)}
+                    className="text-slate-400 hover:text-ink p-1 rounded hover:bg-slate-100"
+                    aria-label="Actions"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <circle cx="3" cy="8" r="1.5" />
+                      <circle cx="8" cy="8" r="1.5" />
+                      <circle cx="13" cy="8" r="1.5" />
+                    </svg>
+                  </button>
+                  {openMenu === c.id && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setOpenMenu(null)} />
+                      <div className="absolute right-4 top-10 z-20 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-32">
+                        <button
+                          onClick={() => { setEditingContact({ ...c }); setOpenMenu(null); }}
+                          className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteContact(c.id)}
+                          className="block w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
             {contacts.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
                   No contacts yet. Add your first one above.
                 </td>
               </tr>
