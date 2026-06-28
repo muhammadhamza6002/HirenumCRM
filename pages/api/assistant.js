@@ -47,22 +47,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing profileText or clientSlug" });
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_KEY;
-  if (!apiKey) return res.status(500).json({ error: "Gemini API key not configured" });
+  const apiKey = process.env.OPENROUTER_KEY || process.env.NEXT_PUBLIC_OPENROUTER_KEY;
+  if (!apiKey) return res.status(500).json({ error: "OpenRouter API key not configured" });
 
   const context = CLIENT_CONTEXT[clientSlug] || CLIENT_CONTEXT.hirenum;
 
-  const prompt = `${context}
+  const systemPrompt = `${context}
 
----
-
-Analyze this LinkedIn prospect:
-
-"""
-${profileText}
-"""
-
-Return a JSON object (no markdown, no code fences, just raw JSON) with this exact shape:
+You must respond with a JSON object (raw JSON, no markdown, no code fences) with this exact shape:
 {
   "name": "Full name extracted from profile",
   "company": "Company name or empty string",
@@ -74,28 +66,44 @@ Return a JSON object (no markdown, no code fences, just raw JSON) with this exac
   "draft_message": "The personalized DM following the client's rules. Use only the rules above. No hyphens. No exclamation marks."
 }`;
 
+  const userPrompt = `Analyze this LinkedIn prospect:\n\n"""\n${profileText}\n"""`;
+
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, responseMimeType: "application/json" },
-        }),
-      }
-    );
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://hirenum.vercel.app",
+        "X-Title": "Pulse CRM",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.0-flash-exp:free",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      }),
+    });
 
     const data = await response.json();
     if (!response.ok) {
-      return res.status(500).json({ error: data.error?.message || "Gemini API error", raw: data });
+      return res.status(500).json({ error: data.error?.message || "OpenRouter error", raw: data });
     }
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return res.status(500).json({ error: "Empty response from Gemini", raw: data });
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) return res.status(500).json({ error: "Empty response from model", raw: data });
 
-    const parsed = JSON.parse(text);
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) return res.status(500).json({ error: "Could not parse JSON from model", raw: text });
+      parsed = JSON.parse(match[0]);
+    }
     return res.status(200).json(parsed);
   } catch (err) {
     return res.status(500).json({ error: err.message });
