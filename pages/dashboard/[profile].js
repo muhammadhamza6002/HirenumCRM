@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { supabase } from "../../lib/supabaseClient";
@@ -63,6 +63,7 @@ export default function ProfileDashboard() {
   const [aiError, setAiError] = useState("");
   const [editedMessage, setEditedMessage] = useState("");
   const [openMenu, setOpenMenu] = useState(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const [editingContact, setEditingContact] = useState(null);
   const [form, setForm] = useState({
     name: "",
@@ -402,6 +403,33 @@ export default function ProfileDashboard() {
         </form>
       )}
 
+      {openMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
+          <div
+            className="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-32"
+            style={{ top: menuPos.top, left: menuPos.left }}
+          >
+            <button
+              onClick={() => {
+                const c = contacts.find((x) => x.id === openMenu);
+                if (c) setEditingContact({ ...c });
+                setOpenMenu(null);
+              }}
+              className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => deleteContact(openMenu)}
+              className="block w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+            >
+              Delete
+            </button>
+          </div>
+        </>
+      )}
+
       {editingContact && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setEditingContact(null)}>
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -519,9 +547,22 @@ export default function ProfileDashboard() {
                     ))}
                   </select>
                 </td>
-                <td className="px-4 py-3 relative">
+                <td className="px-4 py-3">
                   <button
-                    onClick={() => setOpenMenu(openMenu === c.id ? null : c.id)}
+                    onClick={(e) => {
+                      if (openMenu === c.id) {
+                        setOpenMenu(null);
+                        return;
+                      }
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const menuWidth = 128;
+                      const menuHeight = 80;
+                      const spaceBelow = window.innerHeight - rect.bottom;
+                      const top = spaceBelow < menuHeight + 10 ? rect.top - menuHeight - 4 : rect.bottom + 4;
+                      const left = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8);
+                      setMenuPos({ top, left });
+                      setOpenMenu(c.id);
+                    }}
                     className="text-slate-400 hover:text-ink p-1 rounded hover:bg-slate-100"
                     aria-label="Actions"
                   >
@@ -531,25 +572,6 @@ export default function ProfileDashboard() {
                       <circle cx="13" cy="8" r="1.5" />
                     </svg>
                   </button>
-                  {openMenu === c.id && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setOpenMenu(null)} />
-                      <div className="absolute right-4 top-10 z-20 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-32">
-                        <button
-                          onClick={() => { setEditingContact({ ...c }); setOpenMenu(null); }}
-                          className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deleteContact(c.id)}
-                          className="block w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
                 </td>
               </tr>
             ))}
