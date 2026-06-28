@@ -56,6 +56,12 @@ export default function ProfileDashboard() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showAI, setShowAI] = useState(false);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiError, setAiError] = useState("");
+  const [editedMessage, setEditedMessage] = useState("");
   const [form, setForm] = useState({
     name: "",
     linkedin_url: "",
@@ -120,6 +126,55 @@ export default function ProfileDashboard() {
     }
   }
 
+  async function runAI() {
+    if (!aiInput.trim()) return;
+    setAiLoading(true);
+    setAiError("");
+    setAiResult(null);
+    try {
+      const res = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileText: aiInput, clientSlug: slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAiError(data.error || "Something went wrong");
+      } else {
+        setAiResult(data);
+        setEditedMessage(data.draft_message || "");
+      }
+    } catch (e) {
+      setAiError(e.message);
+    }
+    setAiLoading(false);
+  }
+
+  async function saveAIContact(didSend) {
+    if (!aiResult || !profile) return;
+    const { error } = await supabase.from("contacts").insert({
+      profile_id: profile.id,
+      name: aiResult.name,
+      company: aiResult.company,
+      role: aiResult.role,
+      industry: aiResult.industry,
+      source: "outbound",
+      score: aiResult.score,
+      draft_message: editedMessage,
+      notes: `AI fit: ${aiResult.fit} — ${aiResult.fit_reason}`,
+      stage: didSend ? "dm_sent" : "not_contacted",
+    });
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    setAiInput("");
+    setAiResult(null);
+    setEditedMessage("");
+    setShowAI(false);
+    loadAll();
+  }
+
   async function updateField(id, field, value) {
     await supabase.from("contacts").update({ [field]: value, updated_at: new Date() }).eq("id", id);
     loadAll();
@@ -153,12 +208,20 @@ export default function ProfileDashboard() {
           </Link>
           <h1 className="text-2xl font-bold text-ink mt-1">{profile.name}</h1>
         </div>
-        <button
-          onClick={() => setShowForm((s) => !s)}
-          className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90"
-        >
-          {showForm ? "Cancel" : "+ Add Contact"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setShowAI((s) => !s); setShowForm(false); }}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90"
+          >
+            {showAI ? "Close AI" : "AI Assistant"}
+          </button>
+          <button
+            onClick={() => { setShowForm((s) => !s); setShowAI(false); }}
+            className="bg-accent text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90"
+          >
+            {showForm ? "Cancel" : "+ Add Contact"}
+          </button>
+        </div>
       </div>
 
       {/* Funnel stats */}
@@ -170,6 +233,105 @@ export default function ProfileDashboard() {
         <StatCard label="Interested" value={byStage.interested} />
         <StatCard label="Converted" value={byStage.converted} />
       </div>
+
+      {showAI && (
+        <div className="bg-white border border-purple-200 rounded-xl p-5 mb-8">
+          <h2 className="text-lg font-semibold text-ink mb-1">AI Assistant</h2>
+          <p className="text-xs text-slate-500 mb-4">
+            Paste a LinkedIn profile (name, role, company, about, recent activity — whatever you copied). I'll score the fit and draft a DM following {profile.name}'s rules.
+          </p>
+
+          <textarea
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono min-h-[140px] mb-3"
+            placeholder="Paste LinkedIn profile text here..."
+            value={aiInput}
+            onChange={(e) => setAiInput(e.target.value)}
+          />
+
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={runAI}
+              disabled={aiLoading || !aiInput.trim()}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+            >
+              {aiLoading ? "Analyzing..." : "Validate & Draft"}
+            </button>
+            {aiResult && (
+              <button
+                onClick={() => { setAiResult(null); setAiInput(""); setEditedMessage(""); }}
+                className="text-sm text-slate-500 px-3"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {aiError && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-sm mb-4">
+              {aiError}
+            </div>
+          )}
+
+          {aiResult && (
+            <div className="border-t border-slate-200 pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div>
+                  <div className="text-xs text-slate-400">Name</div>
+                  <div className="text-sm font-medium text-ink">{aiResult.name || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-400">Company</div>
+                  <div className="text-sm font-medium text-ink">{aiResult.company || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-400">Role</div>
+                  <div className="text-sm font-medium text-ink">{aiResult.role || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-400">Industry</div>
+                  <div className="text-sm font-medium text-ink">{aiResult.industry || "—"}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  aiResult.fit === "strong" ? "bg-emerald-100 text-emerald-700" :
+                  aiResult.fit === "weak" ? "bg-amber-100 text-amber-700" :
+                  "bg-rose-100 text-rose-700"
+                }`}>
+                  {aiResult.fit?.toUpperCase()} FIT
+                </span>
+                <span className="text-sm text-slate-600">Score: <strong>{aiResult.score}</strong></span>
+                <span className="text-xs text-slate-500 italic">{aiResult.fit_reason}</span>
+              </div>
+
+              <div className="mb-3">
+                <label className="text-xs text-slate-500 block mb-1">Draft Message (edit before sending)</label>
+                <textarea
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[160px]"
+                  value={editedMessage}
+                  onChange={(e) => setEditedMessage(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => saveAIContact(true)}
+                  className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90"
+                >
+                  I sent the DM → Save as "DM Sent"
+                </button>
+                <button
+                  onClick={() => saveAIContact(false)}
+                  className="bg-slate-200 text-ink px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90"
+                >
+                  Save without sending
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {showForm && (
         <form
