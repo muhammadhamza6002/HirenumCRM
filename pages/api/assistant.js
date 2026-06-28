@@ -47,8 +47,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing profileText or clientSlug" });
   }
 
-  const apiKey = process.env.OPENROUTER_KEY || process.env.NEXT_PUBLIC_OPENROUTER_KEY;
-  if (!apiKey) return res.status(500).json({ error: "OpenRouter API key not configured" });
+  const groqKey = process.env.GROQ_KEY || process.env.NEXT_PUBLIC_GROQ_KEY;
+  const openrouterKey = process.env.OPENROUTER_KEY || process.env.NEXT_PUBLIC_OPENROUTER_KEY;
+  if (!groqKey && !openrouterKey) {
+    return res.status(500).json({ error: "No API key configured (need GROQ_KEY or OPENROUTER_KEY)" });
+  }
 
   const context = CLIENT_CONTEXT[clientSlug] || CLIENT_CONTEXT.hirenum;
 
@@ -68,25 +71,35 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
 
   const userPrompt = `Analyze this LinkedIn prospect:\n\n"""\n${profileText}\n"""`;
 
-  const models = [
-    "deepseek/deepseek-chat-v3-0324:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "qwen/qwen-2.5-72b-instruct:free",
-    "nvidia/llama-3.1-nemotron-70b-instruct:free",
-  ];
+  const attempts = [];
+  if (groqKey) {
+    attempts.push(
+      { provider: "groq", model: "llama-3.3-70b-versatile", url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey },
+      { provider: "groq", model: "llama-3.1-8b-instant", url: "https://api.groq.com/openai/v1/chat/completions", key: groqKey }
+    );
+  }
+  if (openrouterKey) {
+    attempts.push(
+      { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", url: "https://openrouter.ai/api/v1/chat/completions", key: openrouterKey },
+      { provider: "openrouter", model: "deepseek/deepseek-chat-v3-0324:free", url: "https://openrouter.ai/api/v1/chat/completions", key: openrouterKey }
+    );
+  }
 
   const errors = [];
 
-  for (const model of models) {
+  for (const { provider, model, url, key } of attempts) {
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      };
+      if (provider === "openrouter") {
+        headers["HTTP-Referer"] = "https://hirenum-crm.vercel.app";
+        headers["X-Title"] = "Pulse CRM";
+      }
+      const response = await fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://hirenum-crm.vercel.app",
-          "X-Title": "Pulse CRM",
-        },
+        headers,
         body: JSON.stringify({
           model,
           messages: [
@@ -99,13 +112,13 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
 
       const data = await response.json();
       if (!response.ok) {
-        errors.push(`[${model}] ${data.error?.message || "OpenRouter error"}`);
+        errors.push(`[${provider}/${model}] ${data.error?.message || "API error"}`);
         continue;
       }
 
       const text = data.choices?.[0]?.message?.content;
       if (!text) {
-        errors.push(`[${model}] Empty response`);
+        errors.push(`[${provider}/${model}] Empty response`);
         continue;
       }
 
@@ -115,19 +128,19 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
       } catch {
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) {
-          errors.push(`[${model}] Could not parse JSON`);
+          errors.push(`[${provider}/${model}] Could not parse JSON`);
           continue;
         }
         try {
           parsed = JSON.parse(match[0]);
         } catch (e) {
-          errors.push(`[${model}] JSON parse failed: ${e.message}`);
+          errors.push(`[${provider}/${model}] JSON parse failed: ${e.message}`);
           continue;
         }
       }
-      return res.status(200).json({ ...parsed, _model: model });
+      return res.status(200).json({ ...parsed, _model: `${provider}/${model}` });
     } catch (err) {
-      errors.push(`[${model}] ${err.message}`);
+      errors.push(`[${provider}/${model}] ${err.message}`);
     }
   }
 
