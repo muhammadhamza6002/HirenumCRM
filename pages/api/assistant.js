@@ -71,12 +71,11 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
   const models = [
     "deepseek/deepseek-chat-v3-0324:free",
     "meta-llama/llama-3.3-70b-instruct:free",
-    "google/gemini-2.0-flash-exp:free",
-    "mistralai/mistral-small-3.2-24b-instruct:free",
+    "qwen/qwen-2.5-72b-instruct:free",
+    "nvidia/llama-3.1-nemotron-70b-instruct:free",
   ];
 
-  let lastError = "";
-  let lastRaw = null;
+  const errors = [];
 
   for (const model of models) {
     try {
@@ -100,15 +99,13 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
 
       const data = await response.json();
       if (!response.ok) {
-        lastError = `[${model}] ${data.error?.message || "OpenRouter error"}`;
-        lastRaw = data;
+        errors.push(`[${model}] ${data.error?.message || "OpenRouter error"}`);
         continue;
       }
 
       const text = data.choices?.[0]?.message?.content;
       if (!text) {
-        lastError = `[${model}] Empty response`;
-        lastRaw = data;
+        errors.push(`[${model}] Empty response`);
         continue;
       }
 
@@ -118,23 +115,21 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
       } catch {
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) {
-          lastError = `[${model}] Could not parse JSON`;
-          lastRaw = text;
+          errors.push(`[${model}] Could not parse JSON`);
           continue;
         }
         try {
           parsed = JSON.parse(match[0]);
         } catch (e) {
-          lastError = `[${model}] JSON parse failed: ${e.message}`;
-          lastRaw = text;
+          errors.push(`[${model}] JSON parse failed: ${e.message}`);
           continue;
         }
       }
       return res.status(200).json({ ...parsed, _model: model });
     } catch (err) {
-      lastError = `[${model}] ${err.message}`;
+      errors.push(`[${model}] ${err.message}`);
     }
   }
 
-  return res.status(500).json({ error: lastError || "All models failed", raw: lastRaw });
+  return res.status(500).json({ error: "All models failed. " + errors.join(" | ") });
 }
