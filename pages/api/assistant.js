@@ -68,44 +68,73 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
 
   const userPrompt = `Analyze this LinkedIn prospect:\n\n"""\n${profileText}\n"""`;
 
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://hirenum.vercel.app",
-        "X-Title": "Pulse CRM",
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3.3-70b-instruct:free",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.7,
-      }),
-    });
+  const models = [
+    "deepseek/deepseek-chat-v3-0324:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "google/gemini-2.0-flash-exp:free",
+    "mistralai/mistral-small-3.2-24b-instruct:free",
+  ];
 
-    const data = await response.json();
-    if (!response.ok) {
-      return res.status(500).json({ error: data.error?.message || "OpenRouter error", raw: data });
-    }
+  let lastError = "";
+  let lastRaw = null;
 
-    const text = data.choices?.[0]?.message?.content;
-    if (!text) return res.status(500).json({ error: "Empty response from model", raw: data });
-
-    let parsed;
+  for (const model of models) {
     try {
-      parsed = JSON.parse(text);
-    } catch {
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) return res.status(500).json({ error: "Could not parse JSON from model", raw: text });
-      parsed = JSON.parse(match[0]);
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://hirenum-crm.vercel.app",
+          "X-Title": "Pulse CRM",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.6,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        lastError = `[${model}] ${data.error?.message || "OpenRouter error"}`;
+        lastRaw = data;
+        continue;
+      }
+
+      const text = data.choices?.[0]?.message?.content;
+      if (!text) {
+        lastError = `[${model}] Empty response`;
+        lastRaw = data;
+        continue;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) {
+          lastError = `[${model}] Could not parse JSON`;
+          lastRaw = text;
+          continue;
+        }
+        try {
+          parsed = JSON.parse(match[0]);
+        } catch (e) {
+          lastError = `[${model}] JSON parse failed: ${e.message}`;
+          lastRaw = text;
+          continue;
+        }
+      }
+      return res.status(200).json({ ...parsed, _model: model });
+    } catch (err) {
+      lastError = `[${model}] ${err.message}`;
     }
-    return res.status(200).json(parsed);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
   }
+
+  return res.status(500).json({ error: lastError || "All models failed", raw: lastRaw });
 }
