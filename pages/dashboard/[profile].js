@@ -662,7 +662,7 @@ function StatCard({ label, value, accent, active, onClick }) {
     >
       <div className={`text-3xl font-extrabold ${accentMap[accent] || "text-ink"}`}>{value || 0}</div>
       <div className={`text-[10px] uppercase tracking-widest font-semibold mt-1 ${active ? "text-pink" : "text-muted"}`}>
-        {label}{active && " ✕"}
+        {label}
       </div>
     </button>
   );
