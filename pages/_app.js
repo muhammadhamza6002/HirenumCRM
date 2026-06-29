@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import Layout from "../components/Layout";
 import "../styles/globals.css";
 
 export default function App({ Component, pageProps }) {
@@ -11,5 +12,13 @@ export default function App({ Component, pageProps }) {
     if (!auth) router.replace("/login");
   }, [router.pathname]);
 
-  return <Component {...pageProps} />;
+  if (router.pathname === "/login") {
+    return <Component {...pageProps} />;
+  }
+
+  return (
+    <Layout>
+      <Component {...pageProps} />
+    </Layout>
+  );
 }
