@@ -245,9 +245,9 @@ export default function ProfileDashboard() {
         <div className="flex gap-3">
           <button
             onClick={() => { setShowAI((s) => !s); setShowForm(false); }}
-            className="bg-pink hover:bg-pink-hover text-white rounded-pill px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 hover:shadow-pink-glow"
+            className="bg-pink hover:bg-pink-hover text-white rounded-pill px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition hover:shadow-pink-glow"
           >
-            <span>⚡</span> {showAI ? "Close AI" : "AI Assistant"}
+            {showAI ? "Close AI" : "AI Assistant"}
           </button>
           <button
             onClick={() => { setShowForm((s) => !s); setShowAI(false); }}
