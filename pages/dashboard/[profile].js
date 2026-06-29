@@ -282,17 +282,16 @@ export default function ProfileDashboard() {
       return;
     }
 
+    const prettyStage = (s) => (STAGES.find((x) => x.value === s)?.label) || "";
+    const prettySentiment = (s) => (SENTIMENTS.find((x) => x.value === s)?.label === "—" ? "" : SENTIMENTS.find((x) => x.value === s)?.label) || "";
+
     const headers = [
-      "Name", "Company", "Role", "Industry", "LinkedIn URL", "Email", "Email Source",
-      "Source", "Stage", "Sentiment", "Score", "Comment / Engagement",
-      "Draft Message", "Notes", "Created At", "Updated At",
+      "Name", "Company", "Role", "Industry", "LinkedIn URL", "Email", "Stage", "Sentiment",
     ];
     const rows = filtered.map((c) => [
-      c.name, c.company, c.role, c.industry, c.linkedin_url, c.email, c.email_source,
-      c.source, c.stage, c.sentiment, c.score, c.comment_text,
-      c.draft_message, c.notes,
-      c.created_at ? new Date(c.created_at).toISOString() : "",
-      c.updated_at ? new Date(c.updated_at).toISOString() : "",
+      c.name || "", c.company || "", c.role || "", c.industry || "",
+      c.linkedin_url || "", c.email || "",
+      prettyStage(c.stage), prettySentiment(c.sentiment),
     ]);
 
     const csv = [
