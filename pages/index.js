@@ -26,33 +26,63 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6">
-      <div className="flex items-center justify-between w-full max-w-md mb-2">
-        <h1 className="text-3xl font-bold text-ink">Pulse</h1>
-        <button onClick={signOut} className="text-xs text-slate-400 hover:text-rose-500 transition">
+    <div className="min-h-screen flex flex-col bg-bg-dark relative overflow-hidden">
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-teal/5 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-pink/5 blur-3xl pointer-events-none" />
+
+      <nav className="relative z-10 flex items-center justify-between px-8 py-5 border-b border-border">
+        <h1 className="text-2xl font-extrabold tracking-tight">
+          <span className="text-teal">hirenum</span>
+          <span className="text-pink">.</span>
+          <span className="text-ink ml-2 text-base font-medium text-muted">CRM</span>
+        </h1>
+        <button
+          onClick={signOut}
+          className="text-xs text-muted hover:text-pink transition uppercase tracking-wider font-semibold"
+        >
           Sign out
         </button>
-      </div>
-      <p className="text-slate-500 mb-10">Select a profile to open its dashboard</p>
+      </nav>
 
-      {loading && <p className="text-slate-400">Loading profiles…</p>}
-
-      <div className="grid gap-4 w-full max-w-md">
-        {profiles.map((p) => (
-          <Link
-            key={p.id}
-            href={`/dashboard/${p.slug}`}
-            className="block rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm hover:shadow-md hover:border-accent transition"
-          >
-            <div className="text-lg font-semibold text-ink">{p.name}</div>
-            <div className="text-sm text-slate-400">Open dashboard →</div>
-          </Link>
-        ))}
-        {!loading && profiles.length === 0 && (
-          <p className="text-slate-400 text-sm text-center">
-            No profiles found. Run supabase_schema.sql in your Supabase project first.
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-16">
+        <div className="text-center mb-14 max-w-3xl">
+          <h2 className="text-5xl md:text-6xl font-extrabold uppercase tracking-tight leading-tight text-ink">
+            Who are we building <span className="text-teal">for</span> today<span className="text-pink">.</span>
+          </h2>
+          <p className="text-muted text-base mt-5">
+            Select a profile to open its outreach dashboard.
           </p>
-        )}
+        </div>
+
+        {loading && <p className="text-muted text-sm">Loading profiles…</p>}
+
+        <div className="grid gap-5 w-full max-w-2xl">
+          {profiles.map((p, idx) => (
+            <Link
+              key={p.id}
+              href={`/dashboard/${p.slug}`}
+              className="group block bg-bg-card hover:bg-bg-hover border border-border hover:border-teal rounded-card px-7 py-6 transition-all hover:shadow-teal-glow"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-muted mb-1 font-semibold">
+                    Profile {String(idx + 1).padStart(2, "0")}
+                  </div>
+                  <div className="text-2xl font-extrabold text-ink">
+                    {p.name}
+                    <span className="text-pink">.</span>
+                  </div>
+                </div>
+                <div className="text-teal text-2xl transition-transform group-hover:translate-x-1">→</div>
+              </div>
+            </Link>
+          ))}
+          {!loading && profiles.length === 0 && (
+            <p className="text-muted text-sm text-center py-10">
+              No profiles found. Run supabase_schema.sql in your Supabase project first.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
