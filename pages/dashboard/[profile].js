@@ -75,6 +75,7 @@ export default function ProfileDashboard() {
   const [openMenu, setOpenMenu] = useState(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const [editingContact, setEditingContact] = useState(null);
+  const [filter, setFilter] = useState(null);
   const [form, setForm] = useState({
     name: "",
     linkedin_url: "",
@@ -229,6 +230,12 @@ export default function ProfileDashboard() {
   const engaged = contacts.filter((c) => c.source === "post_engagement").length;
   const highScore = contacts.filter((c) => c.score >= 70).length;
 
+  const visibleContacts = !filter
+    ? contacts
+    : filter === "engagement"
+    ? contacts.filter((c) => c.source === "post_engagement")
+    : contacts.filter((c) => c.stage === filter);
+
   if (loading) return <div className="p-10 text-muted">Loading…</div>;
   if (!profile)
     return (
@@ -274,13 +281,24 @@ export default function ProfileDashboard() {
         </h1>
 
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-10">
-          <StatCard label="Total" value={total} />
-          <StatCard label="From Engagement" value={engaged} />
-          <StatCard label="DM Sent" value={byStage.dm_sent} accent="teal" />
-          <StatCard label="Replied" value={byStage.replied} accent="pink" />
-          <StatCard label="Interested" value={byStage.interested} accent="teal" />
-          <StatCard label="Converted" value={byStage.converted} accent="teal-strong" />
+          <StatCard label="Total" value={total} active={filter === null} onClick={() => setFilter(null)} />
+          <StatCard label="From Engagement" value={engaged} active={filter === "engagement"} onClick={() => setFilter(filter === "engagement" ? null : "engagement")} />
+          <StatCard label="DM Sent" value={byStage.dm_sent} accent="teal" active={filter === "dm_sent"} onClick={() => setFilter(filter === "dm_sent" ? null : "dm_sent")} />
+          <StatCard label="Replied" value={byStage.replied} accent="pink" active={filter === "replied"} onClick={() => setFilter(filter === "replied" ? null : "replied")} />
+          <StatCard label="Interested" value={byStage.interested} accent="teal" active={filter === "interested"} onClick={() => setFilter(filter === "interested" ? null : "interested")} />
+          <StatCard label="Converted" value={byStage.converted} accent="teal-strong" active={filter === "converted"} onClick={() => setFilter(filter === "converted" ? null : "converted")} />
         </div>
+
+        {filter && (
+          <div className="flex items-center justify-between mb-5 bg-bg-card border border-border rounded-card px-5 py-3">
+            <span className="text-xs text-muted uppercase tracking-wider">
+              Filtered by <span className="text-teal font-bold">{filter === "engagement" ? "Post Engagement" : filter.replace("_", " ").toUpperCase()}</span>
+            </span>
+            <button onClick={() => setFilter(null)} className="text-xs text-pink hover:text-pink-hover uppercase tracking-wider font-bold">
+              Clear filter ×
+            </button>
+          </div>
+        )}
 
       {showAI && (
         <div className="bg-bg-card border border-border rounded-card p-7 mb-8 relative overflow-hidden">
@@ -526,7 +544,7 @@ export default function ProfileDashboard() {
             </tr>
           </thead>
           <tbody>
-            {contacts.map((c) => (
+            {visibleContacts.map((c) => (
               <tr key={c.id} className="border-t border-border hover:bg-bg-hover/40 transition">
                 <td className="px-5 py-4">
                   <div className="font-bold text-ink">{c.name}</div>
@@ -611,10 +629,12 @@ export default function ProfileDashboard() {
                 </td>
               </tr>
             ))}
-            {contacts.length === 0 && (
+            {visibleContacts.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-5 py-16 text-center text-muted text-sm">
-                  No contacts yet. Add your first one above<span className="text-pink">.</span>
+                  {filter
+                    ? <>No contacts match this filter<span className="text-pink">.</span></>
+                    : <>No contacts yet. Add your first one above<span className="text-pink">.</span></>}
                 </td>
               </tr>
             )}
@@ -626,20 +646,25 @@ export default function ProfileDashboard() {
   );
 }
 
-function StatCard({ label, value, accent }) {
+function StatCard({ label, value, accent, active, onClick }) {
   const accentMap = {
     teal: "text-teal",
     pink: "text-pink",
     "teal-strong": "text-teal",
   };
-  const borderMap = {
-    "teal-strong": "border-teal/40 shadow-teal-glow",
-  };
+  const baseBorder = accent === "teal-strong" ? "border-teal/40 shadow-teal-glow" : "border-border";
+  const activeBorder = "border-pink shadow-pink-glow ring-1 ring-pink";
   return (
-    <div className={`bg-bg-card border rounded-card px-5 py-4 ${borderMap[accent] || "border-border"}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`bg-bg-card border rounded-card px-5 py-4 text-left transition-all hover:border-teal/50 ${active ? activeBorder : baseBorder}`}
+    >
       <div className={`text-3xl font-extrabold ${accentMap[accent] || "text-ink"}`}>{value || 0}</div>
-      <div className="text-[10px] text-muted uppercase tracking-widest font-semibold mt-1">{label}</div>
-    </div>
+      <div className={`text-[10px] uppercase tracking-widest font-semibold mt-1 ${active ? "text-pink" : "text-muted"}`}>
+        {label}{active && " ✕"}
+      </div>
+    </button>
   );
 }
 
