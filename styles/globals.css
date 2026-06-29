@@ -1,8 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-teal: #1AC9C4;
+  --color-pink: #E8158E;
+  --bg-dark: #0A0A0A;
+  --bg-card: #161616;
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: "Plus Jakarta Sans", "Poppins", system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Scrollbar styled to match dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+/* Form controls — dark by default */
+input,
+textarea,
+select {
+  background-color: #0F0F0F;
+  color: #FFFFFF;
+  border-color: #262626;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #525252;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #1AC9C4;
+  box-shadow: 0 0 0 3px rgba(26, 201, 196, 0.2);
+}
+
+/* The teal-dot ending accent — used on hero headlines */
+.headline-dot::after {
+  content: ".";
+  color: #1AC9C4;
+}
+.headline-dot-pink::after {
+  content: ".";
+  color: #E8158E;
 }
