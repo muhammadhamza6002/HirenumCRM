@@ -78,6 +78,10 @@ export default function ProfileDashboard() {
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const [editingContact, setEditingContact] = useState(null);
   const [filter, setFilter] = useState(null);
+  const [showExport, setShowExport] = useState(false);
+  const [exportRange, setExportRange] = useState("week");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [form, setForm] = useState({
     name: "",
     linkedin_url: "",
@@ -227,6 +231,88 @@ export default function ProfileDashboard() {
     loadAll();
   }
 
+  function csvEscape(val) {
+    if (val === null || val === undefined) return "";
+    const s = String(val);
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  }
+
+  function exportCSV() {
+    const now = new Date();
+    let from, to, rangeLabel;
+    if (exportRange === "today") {
+      from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      to = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      rangeLabel = `today-${from.toISOString().slice(0, 10)}`;
+    } else if (exportRange === "week") {
+      from = new Date(now);
+      from.setDate(now.getDate() - 7);
+      to = now;
+      rangeLabel = `last-7-days`;
+    } else if (exportRange === "month") {
+      from = new Date(now);
+      from.setDate(now.getDate() - 30);
+      to = now;
+      rangeLabel = `last-30-days`;
+    } else if (exportRange === "all") {
+      from = new Date(0);
+      to = new Date(8640000000000000);
+      rangeLabel = `all-time`;
+    } else {
+      if (!customFrom || !customTo) {
+        alert("Please pick both From and To dates for the custom range.");
+        return;
+      }
+      from = new Date(customFrom);
+      to = new Date(customTo);
+      to.setDate(to.getDate() + 1);
+      rangeLabel = `${customFrom}_to_${customTo}`;
+    }
+
+    const filtered = contacts.filter((c) => {
+      const d = new Date(c.created_at);
+      return d >= from && d < to;
+    });
+
+    if (filtered.length === 0) {
+      alert("No contacts found in this date range.");
+      return;
+    }
+
+    const headers = [
+      "Name", "Company", "Role", "Industry", "LinkedIn URL", "Email", "Email Source",
+      "Source", "Stage", "Sentiment", "Score", "Comment / Engagement",
+      "Draft Message", "Notes", "Created At", "Updated At",
+    ];
+    const rows = filtered.map((c) => [
+      c.name, c.company, c.role, c.industry, c.linkedin_url, c.email, c.email_source,
+      c.source, c.stage, c.sentiment, c.score, c.comment_text,
+      c.draft_message, c.notes,
+      c.created_at ? new Date(c.created_at).toISOString() : "",
+      c.updated_at ? new Date(c.updated_at).toISOString() : "",
+    ]);
+
+    const csv = [
+      headers.map(csvEscape).join(","),
+      ...rows.map((r) => r.map(csvEscape).join(",")),
+    ].join("\n");
+
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${profile.slug}_${rangeLabel}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setShowExport(false);
+  }
+
   async function updateField(id, field, value) {
     await supabase.from("contacts").update({ [field]: value, updated_at: new Date() }).eq("id", id);
     loadAll();
@@ -270,6 +356,12 @@ export default function ProfileDashboard() {
           </Link>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={() => setShowExport(true)}
+            className="border border-border text-muted hover:border-teal hover:text-teal rounded-pill px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition"
+          >
+            ↓ Export CSV
+          </button>
           <button
             onClick={() => { setShowAI((s) => !s); setShowForm(false); }}
             className="bg-pink hover:bg-pink-hover text-white rounded-pill px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition hover:shadow-pink-glow"
@@ -509,6 +601,62 @@ export default function ProfileDashboard() {
             </button>
           </div>
         </>
+      )}
+
+      {showExport && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center px-4" onClick={() => setShowExport(false)}>
+          <div className="bg-bg-card border border-border rounded-card p-7 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-extrabold text-ink uppercase tracking-tight mb-2">
+              Export CSV<span className="text-teal">.</span>
+            </h2>
+            <p className="text-xs text-muted mb-6">
+              Pick a time range. Contacts created in that window will be exported with full data.
+            </p>
+
+            <div className="flex flex-col gap-2 mb-5">
+              {[
+                { value: "today", label: "Today" },
+                { value: "week", label: "Last 7 days" },
+                { value: "month", label: "Last 30 days" },
+                { value: "all", label: "All time" },
+                { value: "custom", label: "Custom range" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setExportRange(opt.value)}
+                  className={`rounded-pill px-5 py-3 text-xs font-bold uppercase tracking-wider transition border text-left ${
+                    exportRange === opt.value
+                      ? "bg-teal text-black border-teal"
+                      : "bg-transparent text-muted border-border hover:border-teal hover:text-teal"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {exportRange === "custom" && (
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div>
+                  <label className="text-[10px] text-muted uppercase tracking-widest font-semibold block mb-2">From</label>
+                  <input type="date" className="w-full rounded-card px-4 py-2.5 text-sm" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted uppercase tracking-widest font-semibold block mb-2">To</label>
+                  <input type="date" className="w-full rounded-card px-4 py-2.5 text-sm" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowExport(false)} className="px-5 py-2.5 text-xs rounded-pill text-muted hover:text-pink uppercase tracking-wider font-bold transition">Cancel</button>
+              <button onClick={exportCSV} className="bg-teal hover:bg-teal-hover text-black px-6 py-2.5 rounded-pill text-xs font-bold uppercase tracking-wider transition hover:shadow-teal-glow">
+                Download CSV ↓
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {editingContact && (
