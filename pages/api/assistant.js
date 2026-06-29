@@ -160,7 +160,7 @@ KEY OBSERVATIONS FROM THESE EXAMPLES:
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { profileText, clientSlug } = req.body;
+  const { profileText, clientSlug, source, commentText } = req.body;
   if (!profileText || !clientSlug) {
     return res.status(400).json({ error: "Missing profileText or clientSlug" });
   }
@@ -204,7 +204,13 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
   "draft_message": "The personalized DM following the client's rules. Use only the rules above. No hyphens. No exclamation marks."
 }`;
 
-  const userPrompt = `Analyze this LinkedIn prospect:\n\n"""\n${profileText}\n"""`;
+  const engagementBlock = source === "post_engagement" && commentText
+    ? `\n\nIMPORTANT — POST ENGAGEMENT CONTEXT:\nThis prospect engaged with one of ${clientSlug}'s LinkedIn posts. Here is what they said or engaged on:\n"""\n${commentText}\n"""\n\nIn the DM's personalized hook, reference their comment naturally. Acknowledge what they said and pivot into the relevant business angle. Do NOT say "saw your comment on my post" verbatim — instead, reference the substance of what they said (the topic, the angle, the point they made).`
+    : source === "post_engagement"
+    ? `\n\nThis prospect engaged with one of ${clientSlug}'s LinkedIn posts (no comment text provided). In the DM, you can mention noticing their engagement briefly, but mostly rely on their profile for personalization.`
+    : "";
+
+  const userPrompt = `Analyze this LinkedIn prospect:\n\n"""\n${profileText}\n"""${engagementBlock}`;
 
   const attempts = [];
   if (groqKey) {

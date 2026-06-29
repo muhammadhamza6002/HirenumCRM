@@ -68,6 +68,8 @@ export default function ProfileDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [aiInput, setAiInput] = useState("");
+  const [aiSource, setAiSource] = useState("outbound");
+  const [aiComment, setAiComment] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [aiError, setAiError] = useState("");
@@ -152,7 +154,12 @@ export default function ProfileDashboard() {
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileText: aiInput, clientSlug: slug }),
+        body: JSON.stringify({
+          profileText: aiInput,
+          clientSlug: slug,
+          source: aiSource,
+          commentText: aiSource === "post_engagement" ? aiComment : "",
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -177,7 +184,8 @@ export default function ProfileDashboard() {
       industry: aiResult.industry,
       email: aiResult.email || null,
       email_source: aiResult.email ? "apollo" : null,
-      source: "outbound",
+      source: aiSource,
+      comment_text: aiSource === "post_engagement" ? aiComment : null,
       score: aiResult.score,
       draft_message: editedMessage,
       notes: `AI fit: ${aiResult.fit} — ${aiResult.fit_reason}`,
@@ -188,6 +196,8 @@ export default function ProfileDashboard() {
       return;
     }
     setAiInput("");
+    setAiComment("");
+    setAiSource("outbound");
     setAiResult(null);
     setEditedMessage("");
     setShowAI(false);
@@ -313,12 +323,51 @@ export default function ProfileDashboard() {
             Paste a LinkedIn profile (name, role, company, about, recent activity, Apollo email — whatever you copied). I'll score the fit and draft a DM following <span className="text-teal font-semibold">{profile.name}</span>'s rules.
           </p>
 
+          <div className="flex gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setAiSource("outbound")}
+              className={`rounded-pill px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition border ${
+                aiSource === "outbound"
+                  ? "bg-teal text-black border-teal"
+                  : "bg-transparent text-muted border-border hover:border-teal hover:text-teal"
+              }`}
+            >
+              Outbound DM
+            </button>
+            <button
+              type="button"
+              onClick={() => setAiSource("post_engagement")}
+              className={`rounded-pill px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition border ${
+                aiSource === "post_engagement"
+                  ? "bg-pink text-white border-pink"
+                  : "bg-transparent text-muted border-border hover:border-pink hover:text-pink"
+              }`}
+            >
+              Post Engagement
+            </button>
+          </div>
+
           <textarea
             className="w-full rounded-card px-4 py-3 text-sm font-mono min-h-[160px] mb-4"
             placeholder="Paste LinkedIn profile text here..."
             value={aiInput}
             onChange={(e) => setAiInput(e.target.value)}
           />
+
+          {aiSource === "post_engagement" && (
+            <div className="mb-4">
+              <label className="text-[10px] text-muted uppercase tracking-widest font-semibold block mb-2">
+                Their comment / what they engaged on
+              </label>
+              <textarea
+                className="w-full rounded-card px-4 py-3 text-sm min-h-[80px]"
+                placeholder="Paste the comment text or describe how they engaged (liked, commented on what topic, etc.)..."
+                value={aiComment}
+                onChange={(e) => setAiComment(e.target.value)}
+              />
+            </div>
+          )}
 
           <div className="flex gap-3 mb-4">
             <button
@@ -513,6 +562,12 @@ export default function ProfileDashboard() {
               <textarea className="w-full rounded-card px-4 py-2.5 text-sm min-h-[140px]"
                 value={editingContact.draft_message || ""}
                 onChange={(e) => setEditingContact({ ...editingContact, draft_message: e.target.value })} />
+            </div>
+            <div className="mb-4">
+              <label className="text-[10px] text-muted uppercase tracking-widest font-semibold block mb-2">Comment / Engagement Context</label>
+              <textarea className="w-full rounded-card px-4 py-2.5 text-sm min-h-[80px]"
+                value={editingContact.comment_text || ""}
+                onChange={(e) => setEditingContact({ ...editingContact, comment_text: e.target.value })} />
             </div>
             <div className="mb-6">
               <label className="text-[10px] text-muted uppercase tracking-widest font-semibold block mb-2">Notes</label>
