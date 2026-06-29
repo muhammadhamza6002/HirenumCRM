@@ -49,6 +49,21 @@ select {
   background-color: #0F0F0F;
   color: #FFFFFF;
   border-color: #262626;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Selects — pill shape + custom arrow on dark theme */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%231AC9C4'><path d='M6 8.5L1.5 4h9z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px;
+  padding-right: 32px !important;
+  cursor: pointer;
 }
 input::placeholder,
 textarea::placeholder {

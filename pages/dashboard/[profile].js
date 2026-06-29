@@ -37,6 +37,16 @@ function stageColor(stage) {
   return map[stage] || "bg-neutral-800 text-muted";
 }
 
+function sentimentColor(s) {
+  const map = {
+    interested: "bg-teal/15 text-teal",
+    neutral: "bg-neutral-800 text-muted",
+    declined: "bg-pink/15 text-pink",
+    referred: "bg-pink/10 text-pink",
+  };
+  return map[s] || "bg-neutral-900 text-neutral-500";
+}
+
 function computeScore({ industry, role }) {
   // simple rule-based score: tweak as needed
   let score = 0;
@@ -505,7 +515,8 @@ export default function ProfileDashboard() {
           <thead className="bg-bg-hover text-left">
             <tr>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Name</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Company / Role</th>
+              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Company</th>
+              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Role</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Email</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Source</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Score</th>
@@ -525,8 +536,11 @@ export default function ProfileDashboard() {
                     </a>
                   )}
                 </td>
+                <td className="px-5 py-4 text-ink font-medium">
+                  {c.company || <span className="text-neutral-600">—</span>}
+                </td>
                 <td className="px-5 py-4 text-muted">
-                  {c.company || "—"} {c.role ? <span className="text-neutral-500">· {c.role}</span> : ""}
+                  {c.role || <span className="text-neutral-600">—</span>}
                 </td>
                 <td className="px-5 py-4">
                   {c.email ? (
@@ -562,7 +576,7 @@ export default function ProfileDashboard() {
                 </td>
                 <td className="px-5 py-4">
                   <select
-                    className="rounded-pill px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                    className={`rounded-pill px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-none ${sentimentColor(c.sentiment)}`}
                     value={c.sentiment || ""}
                     onChange={(e) => updateField(c.id, "sentiment", e.target.value)}
                   >
@@ -599,7 +613,7 @@ export default function ProfileDashboard() {
             ))}
             {contacts.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-5 py-16 text-center text-muted text-sm">
+                <td colSpan={9} className="px-5 py-16 text-center text-muted text-sm">
                   No contacts yet. Add your first one above<span className="text-pink">.</span>
                 </td>
               </tr>
