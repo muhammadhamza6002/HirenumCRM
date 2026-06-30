@@ -82,6 +82,9 @@ export default function ProfileDashboard() {
   const [exportRange, setExportRange] = useState("week");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [period, setPeriod] = useState("all");
+  const [periodFrom, setPeriodFrom] = useState("");
+  const [periodTo, setPeriodTo] = useState("");
   const [form, setForm] = useState({
     name: "",
     linkedin_url: "",
@@ -317,19 +320,47 @@ export default function ProfileDashboard() {
     loadAll();
   }
 
-  const total = contacts.length;
+  function getPeriodRange() {
+    const now = new Date();
+    if (period === "today") {
+      const f = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      return [f, t];
+    }
+    if (period === "week") {
+      const f = new Date(now); f.setDate(now.getDate() - 7);
+      return [f, now];
+    }
+    if (period === "month") {
+      const f = new Date(now); f.setDate(now.getDate() - 30);
+      return [f, now];
+    }
+    if (period === "custom" && periodFrom && periodTo) {
+      const t = new Date(periodTo); t.setDate(t.getDate() + 1);
+      return [new Date(periodFrom), t];
+    }
+    return [new Date(0), new Date(8640000000000000)];
+  }
+
+  const [periodStart, periodEnd] = getPeriodRange();
+  const periodContacts = contacts.filter((c) => {
+    const d = new Date(c.created_at);
+    return d >= periodStart && d < periodEnd;
+  });
+
+  const total = periodContacts.length;
   const byStage = STAGES.reduce((acc, s) => {
-    acc[s.value] = contacts.filter((c) => c.stage === s.value).length;
+    acc[s.value] = periodContacts.filter((c) => c.stage === s.value).length;
     return acc;
   }, {});
-  const engaged = contacts.filter((c) => c.source === "post_engagement").length;
-  const highScore = contacts.filter((c) => c.score >= 70).length;
+  const engaged = periodContacts.filter((c) => c.source === "post_engagement").length;
+  const highScore = periodContacts.filter((c) => c.score >= 70).length;
 
   const visibleContacts = !filter
-    ? contacts
+    ? periodContacts
     : filter === "engagement"
-    ? contacts.filter((c) => c.source === "post_engagement")
-    : contacts.filter((c) => c.stage === filter);
+    ? periodContacts.filter((c) => c.source === "post_engagement")
+    : periodContacts.filter((c) => c.stage === filter);
 
   if (loading) return <div className="p-10 text-muted">Loading…</div>;
   if (!profile)
@@ -377,9 +408,39 @@ export default function ProfileDashboard() {
       </nav>
 
       <div className="px-8 py-10 max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-ink mb-10 tracking-tight">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-ink mb-6 tracking-tight">
           {profile.name}<span className="text-pink">.</span>
         </h1>
+
+        <div className="flex flex-wrap items-center gap-2 mb-8">
+          <span className="text-[10px] text-muted uppercase tracking-widest font-bold mr-2">Period:</span>
+          {[
+            { value: "all", label: "All time" },
+            { value: "today", label: "Today" },
+            { value: "week", label: "Last 7 days" },
+            { value: "month", label: "Last 30 days" },
+            { value: "custom", label: "Custom" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setPeriod(opt.value)}
+              className={`rounded-pill px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition border ${
+                period === opt.value
+                  ? "bg-teal text-black border-teal"
+                  : "bg-transparent text-muted border-border hover:border-teal hover:text-teal"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {period === "custom" && (
+            <div className="flex items-center gap-2 ml-2">
+              <input type="date" className="rounded-pill px-3 py-1.5 text-xs" value={periodFrom} onChange={(e) => setPeriodFrom(e.target.value)} />
+              <span className="text-muted text-xs">→</span>
+              <input type="date" className="rounded-pill px-3 py-1.5 text-xs" value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} />
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-10">
           <StatCard label="Total" value={total} active={filter === null} onClick={() => setFilter(null)} />
