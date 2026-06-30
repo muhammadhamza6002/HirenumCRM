@@ -8,7 +8,7 @@ const STAGES = [
   { value: "dm_sent", label: "DM Sent" },
   { value: "replied", label: "Replied" },
   { value: "interested", label: "Interested" },
-  { value: "converted", label: "Converted / Call Booked" },
+  { value: "converted", label: "Converted" },
   { value: "cold", label: "Cold" },
 ];
 
@@ -17,7 +17,7 @@ const SENTIMENTS = [
   { value: "interested", label: "Interested" },
   { value: "neutral", label: "Neutral" },
   { value: "declined", label: "Declined" },
-  { value: "referred", label: "Referred Elsewhere" },
+  { value: "referred", label: "Referred" },
 ];
 
 const SOURCES = [
@@ -374,7 +374,7 @@ export default function ProfileDashboard() {
             <span className="text-muted text-sm ml-2 font-medium">CRM</span>
           </div>
         </nav>
-        <div className="px-8 py-10 max-w-7xl mx-auto">
+        <div className="px-6 py-10 max-w-[1400px] mx-auto">
           <div className="h-12 w-64 bg-bg-card rounded-card mb-6 animate-pulse" />
           <div className="h-10 w-96 bg-bg-card rounded-card mb-8 animate-pulse" />
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-10">
@@ -431,7 +431,7 @@ export default function ProfileDashboard() {
         </div>
       </nav>
 
-      <div className="px-8 py-10 max-w-7xl mx-auto">
+      <div className="px-6 py-10 max-w-[1400px] mx-auto">
         <h1 className="text-4xl md:text-5xl font-extrabold text-ink mb-6 tracking-tight">
           {profile.name}<span className="text-pink">.</span>
         </h1>
@@ -818,84 +818,84 @@ export default function ProfileDashboard() {
         </div>
       )}
 
-      <div className="bg-bg-card border border-border rounded-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-bg-card border border-border rounded-card overflow-x-auto">
+        <table className="w-full text-sm min-w-[1000px]">
           <thead className="bg-bg-hover text-left">
             <tr>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Name</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Company</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Role</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Country</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Email</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Source</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Score</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Stage</th>
-              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Sentiment</th>
-              <th className="px-5 py-4 w-10"></th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Name</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Company</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Role</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Country</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Email</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Src</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Score</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Stage</th>
+              <th className="px-3 py-3 text-[10px] uppercase tracking-widest text-muted font-bold">Sentiment</th>
+              <th className="px-2 py-3 w-8"></th>
             </tr>
           </thead>
           <tbody>
             {visibleContacts.map((c) => (
               <tr key={c.id} className="border-t border-border hover:bg-bg-hover/40 transition">
-                <td className="px-5 py-4">
-                  <div className="font-bold text-ink">{c.name}</div>
+                <td className="px-3 py-3">
+                  <div className="font-bold text-ink text-sm whitespace-nowrap">{c.name}</div>
                   {c.linkedin_url && (
-                    <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="text-[10px] text-teal hover:text-teal-hover uppercase tracking-wider font-semibold">
+                    <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="text-[9px] text-teal hover:text-teal-hover uppercase tracking-wider font-semibold">
                       profile ↗
                     </a>
                   )}
                 </td>
-                <td className="px-5 py-4 text-ink font-medium">
+                <td className="px-3 py-3 text-ink font-medium text-sm">
                   {c.company || <span className="text-neutral-600">—</span>}
                 </td>
-                <td className="px-5 py-4 text-muted">
+                <td className="px-3 py-3 text-muted text-sm">
                   {c.role || <span className="text-neutral-600">—</span>}
                 </td>
-                <td className="px-5 py-4 text-muted text-xs">
+                <td className="px-3 py-3 text-muted text-xs whitespace-nowrap">
                   {c.country || <span className="text-neutral-600">—</span>}
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-3 py-3">
                   {c.email ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-ink">{c.email}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs text-ink break-all">{c.email}</span>
                       {c.email_source === "apollo" && (
-                        <span className="inline-block px-2 py-0.5 rounded-pill text-[10px] font-bold text-black" style={{ backgroundColor: "#FBFF3A" }}>APOLLO</span>
+                        <span className="inline-block px-1.5 py-0.5 rounded-pill text-[9px] font-bold text-black" style={{ backgroundColor: "#FBFF3A" }}>APOLLO</span>
                       )}
                       {c.email_source === "manual" && (
-                        <span className="inline-block px-2 py-0.5 rounded-pill text-[10px] font-bold bg-neutral-800 text-muted">MANUAL</span>
+                        <span className="inline-block px-1.5 py-0.5 rounded-pill text-[9px] font-bold bg-neutral-800 text-muted">MANUAL</span>
                       )}
                     </div>
                   ) : (
                     <span className="text-xs text-neutral-600">—</span>
                   )}
                 </td>
-                <td className="px-5 py-4 text-muted text-xs uppercase tracking-wider">
-                  {SOURCES.find((s) => s.value === c.source)?.label}
+                <td className="px-3 py-3 text-muted text-[10px] uppercase tracking-wider whitespace-nowrap">
+                  {c.source === "post_engagement" ? "Engage" : "Outbound"}
                 </td>
-                <td className="px-5 py-4">
-                  <span className={`font-extrabold text-lg ${c.score >= 70 ? "text-teal" : c.score >= 40 ? "text-ink" : "text-muted"}`}>
+                <td className="px-3 py-3">
+                  <span className={`font-extrabold text-base ${c.score >= 70 ? "text-teal" : c.score >= 40 ? "text-ink" : "text-muted"}`}>
                     {c.score}
                   </span>
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-3 py-3">
                   <select
-                    className={`rounded-pill px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-none ${stageColor(c.stage)}`}
+                    className={`rounded-pill px-2 py-1 text-[9px] font-bold uppercase tracking-wider border-none ${stageColor(c.stage)}`}
                     value={c.stage}
                     onChange={(e) => updateField(c.id, "stage", e.target.value)}
                   >
                     {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-3 py-3">
                   <select
-                    className={`rounded-pill px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-none ${sentimentColor(c.sentiment)}`}
+                    className={`rounded-pill px-2 py-1 text-[9px] font-bold uppercase tracking-wider border-none ${sentimentColor(c.sentiment)}`}
                     value={c.sentiment || ""}
                     onChange={(e) => updateField(c.id, "sentiment", e.target.value)}
                   >
                     {SENTIMENTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-2 py-3">
                   <button
                     onClick={(e) => {
                       if (openMenu === c.id) {
