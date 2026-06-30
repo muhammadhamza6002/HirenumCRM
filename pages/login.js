@@ -9,7 +9,7 @@ export default function Login() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (username === "admin" && password === "admin") {
+    if (username === "hirenum" && password === "hirenum") {
       sessionStorage.setItem("pulse_auth", "1");
       router.push("/");
     } else {
