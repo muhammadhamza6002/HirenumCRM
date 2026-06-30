@@ -362,12 +362,33 @@ export default function ProfileDashboard() {
     ? periodContacts.filter((c) => c.source === "post_engagement")
     : periodContacts.filter((c) => c.stage === filter);
 
-  if (loading) return <div className="p-10 text-muted">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg-dark">
+        <nav className="border-b border-border px-8 py-4 flex items-center justify-between">
+          <div className="text-xl font-extrabold tracking-tight">
+            <span className="text-teal">hirenum</span><span className="text-pink">.</span>
+            <span className="text-muted text-sm ml-2 font-medium">CRM</span>
+          </div>
+        </nav>
+        <div className="px-8 py-10 max-w-7xl mx-auto">
+          <div className="h-12 w-64 bg-bg-card rounded-card mb-6 animate-pulse" />
+          <div className="h-10 w-96 bg-bg-card rounded-card mb-8 animate-pulse" />
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-10">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-24 bg-bg-card rounded-card animate-pulse" />
+            ))}
+          </div>
+          <div className="h-96 bg-bg-card rounded-card animate-pulse" />
+        </div>
+      </div>
+    );
+  }
   if (!profile)
     return (
-      <div className="p-10">
-        <p className="text-pink">Profile not found.</p>
-        <Link href="/" className="text-teal underline">
+      <div className="min-h-screen bg-bg-dark flex flex-col items-center justify-center p-10">
+        <p className="text-pink text-lg mb-4">Profile not found<span className="text-teal">.</span></p>
+        <Link href="/" className="text-teal hover:text-teal-hover uppercase text-xs tracking-wider font-bold">
           ← Back to profiles
         </Link>
       </div>

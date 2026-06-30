@@ -54,7 +54,13 @@ export default function Home() {
           </p>
         </div>
 
-        {loading && <p className="text-muted text-sm">Loading profiles…</p>}
+        {loading && (
+          <div className="grid gap-5 w-full max-w-2xl">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-24 bg-bg-card rounded-card border border-border animate-pulse" />
+            ))}
+          </div>
+        )}
 
         <div className="grid gap-5 w-full max-w-2xl">
           {profiles.map((p, idx) => (
