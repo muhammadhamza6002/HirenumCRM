@@ -91,6 +91,7 @@ export default function ProfileDashboard() {
     company: "",
     role: "",
     industry: "",
+    country: "",
     email: "",
     source: "outbound",
     comment_text: "",
@@ -140,6 +141,7 @@ export default function ProfileDashboard() {
         company: "",
         role: "",
         industry: "",
+        country: "",
         email: "",
         source: "outbound",
         comment_text: "",
@@ -189,6 +191,7 @@ export default function ProfileDashboard() {
       company: aiResult.company,
       role: aiResult.role,
       industry: aiResult.industry,
+      country: aiResult.country || null,
       email: aiResult.email || null,
       email_source: aiResult.email ? "apollo" : null,
       source: aiSource,
@@ -289,10 +292,10 @@ export default function ProfileDashboard() {
     const prettySentiment = (s) => (SENTIMENTS.find((x) => x.value === s)?.label === "—" ? "" : SENTIMENTS.find((x) => x.value === s)?.label) || "";
 
     const headers = [
-      "Name", "Company", "Role", "Industry", "LinkedIn URL", "Email", "Stage", "Sentiment",
+      "Name", "Company", "Role", "Industry", "Country", "LinkedIn URL", "Email", "Stage", "Sentiment",
     ];
     const rows = filtered.map((c) => [
-      c.name || "", c.company || "", c.role || "", c.industry || "",
+      c.name || "", c.company || "", c.role || "", c.industry || "", c.country || "",
       c.linkedin_url || "", c.email || "",
       prettyStage(c.stage), prettySentiment(c.sentiment),
     ]);
@@ -573,6 +576,7 @@ export default function ProfileDashboard() {
                 <ResultField label="Company" value={aiResult.company} />
                 <ResultField label="Role" value={aiResult.role} />
                 <ResultField label="Industry" value={aiResult.industry} />
+                <ResultField label="Country" value={aiResult.country} />
                 <div className="col-span-2 md:col-span-4">
                   <div className="text-[10px] text-muted uppercase tracking-widest font-semibold mb-1 flex items-center gap-2">
                     Email
@@ -637,6 +641,7 @@ export default function ProfileDashboard() {
             <Input label="Company" value={form.company} onChange={(v) => setForm({ ...form, company: v })} />
             <Input label="Role / Title" value={form.role} onChange={(v) => setForm({ ...form, role: v })} />
             <Input label="Industry" value={form.industry} onChange={(v) => setForm({ ...form, industry: v })} />
+            <Input label="Country" value={form.country} onChange={(v) => setForm({ ...form, country: v })} />
             <Input label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
             <div>
               <label className="text-[10px] text-muted uppercase tracking-widest font-semibold block mb-2">Source</label>
@@ -752,6 +757,7 @@ export default function ProfileDashboard() {
               <Input label="Company" value={editingContact.company || ""} onChange={(v) => setEditingContact({ ...editingContact, company: v })} />
               <Input label="Role" value={editingContact.role || ""} onChange={(v) => setEditingContact({ ...editingContact, role: v })} />
               <Input label="Industry" value={editingContact.industry || ""} onChange={(v) => setEditingContact({ ...editingContact, industry: v })} />
+              <Input label="Country" value={editingContact.country || ""} onChange={(v) => setEditingContact({ ...editingContact, country: v })} />
               <Input label="Email" value={editingContact.email || ""} onChange={(v) => setEditingContact({ ...editingContact, email: v })} />
               <div>
                 <label className="text-[10px] text-muted uppercase tracking-widest font-semibold block mb-2">Email Source</label>
@@ -819,6 +825,7 @@ export default function ProfileDashboard() {
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Name</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Company</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Role</th>
+              <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Country</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Email</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Source</th>
               <th className="px-5 py-4 text-[10px] uppercase tracking-widest text-muted font-bold">Score</th>
@@ -843,6 +850,9 @@ export default function ProfileDashboard() {
                 </td>
                 <td className="px-5 py-4 text-muted">
                   {c.role || <span className="text-neutral-600">—</span>}
+                </td>
+                <td className="px-5 py-4 text-muted text-xs">
+                  {c.country || <span className="text-neutral-600">—</span>}
                 </td>
                 <td className="px-5 py-4">
                   {c.email ? (
@@ -915,7 +925,7 @@ export default function ProfileDashboard() {
             ))}
             {visibleContacts.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-5 py-16 text-center text-muted text-sm">
+                <td colSpan={10} className="px-5 py-16 text-center text-muted text-sm">
                   {filter
                     ? <>No contacts match this filter<span className="text-pink">.</span></>
                     : <>No contacts yet. Add your first one above<span className="text-pink">.</span></>}

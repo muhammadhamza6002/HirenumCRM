@@ -197,6 +197,7 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
   "company": "Company name or empty string",
   "role": "Job title or empty string",
   "industry": "Industry guess based on company/role",
+  "country": "Country name (full name, e.g. Pakistan, United Arab Emirates, India) inferred from profile location, company location, or city if mentioned. Empty string if truly indeterminate.",
   "email": "Email address if literally present in the pasted text, otherwise empty string",
   "fit": "strong" | "weak" | "not_fit",
   "fit_reason": "One short sentence explaining the fit verdict",
