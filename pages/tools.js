@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-const BOOKMARKLET = `javascript:(function(){var u=window.location.href;var t=document.body.innerText;var c=u+"\\n\\n"+t;navigator.clipboard.writeText(c).then(function(){alert("\\u2713 Profile copied for Pulse CRM.\\n\\nSwitch to the CRM and paste into the AI Assistant.")}).catch(function(e){var ta=document.createElement("textarea");ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert("\\u2713 Profile copied for Pulse CRM.\\n\\nSwitch to the CRM and paste into the AI Assistant.")})})();`;
+const BOOKMARKLET = `javascript:(function(){var u=window.location.href;var t=document.body.innerText;var html=document.documentElement.outerHTML;var re=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;var raw=html.match(re)||[];var seen={};var emails=[];raw.forEach(function(e){var el=e.toLowerCase();if(el.indexOf("linkedin.com")>-1||el.indexOf("noreply")>-1||el.indexOf("no-reply")>-1||el.indexOf("example.com")>-1||el.indexOf("@sentry")>-1)return;if(!seen[el]){seen[el]=1;emails.push(e);}});var eb=emails.length?"\\n\\nEMAILS FOUND: "+emails.join(", ")+"\\n":"";var c=u+eb+"\\n\\n"+t;var msg="\\u2713 Copied "+emails.length+" email"+(emails.length===1?"":"s")+" and full profile.\\n\\nPaste into the CRM AI Assistant.";navigator.clipboard.writeText(c).then(function(){alert(msg)}).catch(function(){var ta=document.createElement("textarea");ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert(msg)})})();`;
 
 export default function Tools() {
   const [copied, setCopied] = useState(false);
@@ -70,12 +70,19 @@ export default function Tools() {
             <span className="bg-teal text-black rounded-pill w-7 h-7 flex items-center justify-center text-xs font-extrabold">3</span>
             <h2 className="text-xl font-extrabold text-ink uppercase tracking-tight">Use it</h2>
           </div>
-          <ol className="text-muted text-sm ml-10 space-y-2 list-decimal list-inside">
+          <ol className="text-muted text-sm ml-10 space-y-3 list-decimal list-inside">
             <li>Open any LinkedIn profile</li>
-            <li>Click <span className="text-pink font-bold">⚡ Send to Pulse CRM</span> in your bookmarks bar</li>
-            <li>The full profile text plus the URL is copied to your clipboard</li>
+            <li>
+              <span className="text-ink font-semibold">Click the Apollo extension first</span> to reveal their email on the page (if available). Wait for the email to appear.
+            </li>
+            <li>Now click <span className="text-pink font-bold">⚡ Send to Pulse CRM</span> in your bookmarks bar</li>
+            <li>A popup confirms: "Copied N emails and full profile" — everything is on your clipboard</li>
             <li>Switch to the CRM, open <span className="text-teal font-bold">AI Assistant</span>, paste (<kbd className="bg-neutral-800 text-teal px-1.5 py-0.5 rounded text-xs font-mono">Ctrl + V</kbd>) — done</li>
           </ol>
+
+          <div className="ml-10 mt-5 bg-teal/10 border border-teal/30 rounded-card p-4 text-xs text-muted">
+            <span className="text-teal font-bold uppercase tracking-wider">Tip:</span> the bookmarklet scans the entire page for email patterns, so any email Apollo has revealed (visible or in hidden containers) will be caught. If Apollo shows nothing, the tool still copies the profile — you just save without an email.
+          </div>
         </div>
 
         <div className="bg-bg-card border border-border rounded-card p-7">
