@@ -497,7 +497,10 @@ export default function ProfileDashboard() {
             </h2>
           </div>
           <p className="text-xs text-muted mb-5 ml-9">
-            Paste a LinkedIn profile (name, role, company, about, recent activity, Apollo email — whatever you copied). I'll score the fit and draft a DM following <span className="text-teal font-semibold">{profile.name}</span>'s rules.
+            Paste a LinkedIn profile (name, role, company, about, recent activity, Apollo email — whatever you copied). I'll score the fit and draft a DM following <span className="text-teal font-semibold">{profile.name}</span>'s rules.{" "}
+            <Link href="/tools" className="text-pink hover:text-pink-hover underline">
+              Skip the manual copy → set up 1-click capture
+            </Link>
           </p>
 
           <div className="flex gap-2 mb-4">
