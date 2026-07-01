@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-const BOOKMARKLET = `javascript:(function(){var u=window.location.href;var t=document.body.innerText;var c=u+"\\n\\n"+t;navigator.clipboard.writeText(c).then(function(){alert("\\u2713 Profile copied for Pulse CRM.\\n\\nSwitch to the CRM and paste into the AI Assistant.")}).catch(function(e){var ta=document.createElement("textarea");ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert("\\u2713 Profile copied for Pulse CRM.\\n\\nSwitch to the CRM and paste into the AI Assistant.")})})();`;
+const BOOKMARKLET = `javascript:(function(){var u=window.location.href;var t=document.body.innerText;var c=u+"\\n\\n"+t;navigator.clipboard.writeText(c).then(function(){alert("\\u2713 Profile copied for Hirenum CRM.\\n\\nSwitch to the CRM and paste into the AI Assistant.")}).catch(function(e){var ta=document.createElement("textarea");ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert("\\u2713 Profile copied for Hirenum CRM.\\n\\nSwitch to the CRM and paste into the AI Assistant.")})})();`;
 
 export default function Tools() {
   const [copied, setCopied] = useState(false);
@@ -57,7 +57,7 @@ export default function Tools() {
               draggable="true"
               className="inline-block bg-pink hover:bg-pink-hover text-white rounded-pill px-6 py-3 text-sm font-bold uppercase tracking-wider transition hover:shadow-pink-glow cursor-move select-none"
             >
-              ⚡ Send to Pulse CRM
+              ⚡ Send to Hirenum CRM
             </a>
             <p className="text-[10px] text-muted mt-3 uppercase tracking-widest font-semibold">
               ↑ Drag this button, don't click it
@@ -72,7 +72,7 @@ export default function Tools() {
           </div>
           <ol className="text-muted text-sm ml-10 space-y-2 list-decimal list-inside">
             <li>Open any LinkedIn profile</li>
-            <li>Click <span className="text-pink font-bold">⚡ Send to Pulse CRM</span> in your bookmarks bar</li>
+            <li>Click <span className="text-pink font-bold">⚡ Send to Hirenum CRM</span> in your bookmarks bar</li>
             <li>The full profile text plus the URL is copied to your clipboard</li>
             <li>Switch to the CRM, open <span className="text-teal font-bold">AI Assistant</span>, paste (<kbd className="bg-neutral-800 text-teal px-1.5 py-0.5 rounded text-xs font-mono">Ctrl + V</kbd>) — done</li>
           </ol>
@@ -85,7 +85,7 @@ export default function Tools() {
           </div>
           <div className="ml-10">
             <p className="text-muted text-xs mb-3">
-              Right-click your bookmarks bar → Add page → paste the code below as the URL, and name it "Send to Pulse CRM".
+              Right-click your bookmarks bar → Add page → paste the code below as the URL, and name it "Send to Hirenum CRM".
             </p>
             <button
               onClick={copyBookmarklet}

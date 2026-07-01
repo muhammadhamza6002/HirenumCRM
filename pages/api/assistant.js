@@ -290,7 +290,7 @@ You must respond with a JSON object (raw JSON, no markdown, no code fences) with
       };
       if (provider === "openrouter") {
         headers["HTTP-Referer"] = "https://hirenum-crm.vercel.app";
-        headers["X-Title"] = "Pulse CRM";
+        headers["X-Title"] = "Hirenum CRM";
       }
       const response = await fetch(url, {
         method: "POST",
