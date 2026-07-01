@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-const BOOKMARKLET = `javascript:(function(){var u=window.location.href;var t=document.body.innerText;var html=document.documentElement.outerHTML;var re=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;var raw=html.match(re)||[];var seen={};var emails=[];raw.forEach(function(e){var el=e.toLowerCase();if(el.indexOf("linkedin.com")>-1||el.indexOf("noreply")>-1||el.indexOf("no-reply")>-1||el.indexOf("example.com")>-1||el.indexOf("@sentry")>-1)return;if(!seen[el]){seen[el]=1;emails.push(e);}});var eb=emails.length?"\\n\\nEMAILS FOUND: "+emails.join(", ")+"\\n":"";var c=u+eb+"\\n\\n"+t;var msg="\\u2713 Copied "+emails.length+" email"+(emails.length===1?"":"s")+" and full profile.\\n\\nPaste into the CRM AI Assistant.";navigator.clipboard.writeText(c).then(function(){alert(msg)}).catch(function(){var ta=document.createElement("textarea");ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert(msg)})})();`;
+const BOOKMARKLET = `javascript:(function(){var u=window.location.href;var t=document.body.innerText;var re=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;var seen={};var emails=[];function add(s){if(!s)return;var m=String(s).match(re);if(!m)return;m.forEach(function(e){var el=e.toLowerCase();if(el.indexOf("linkedin.com")>-1||el.indexOf("noreply")>-1||el.indexOf("no-reply")>-1||el.indexOf("example.com")>-1||el.indexOf("sentry")>-1||el.indexOf("bugsnag")>-1||el.indexOf("wixpress")>-1||el.indexOf("sentry.io")>-1)return;if(!seen[el]){seen[el]=1;emails.push(e);}})}function walk(n){if(!n)return;try{if(n.nodeType===3){add(n.textContent);}if(n.attributes){for(var i=0;i<n.attributes.length;i++){add(n.attributes[i].value);}}if(n.shadowRoot){walk(n.shadowRoot);}if(n.tagName==="IFRAME"){try{if(n.contentDocument){walk(n.contentDocument);}}catch(e){}}var kids=n.childNodes||[];for(var j=0;j<kids.length;j++){walk(kids[j]);}}catch(e){}}walk(document);add(document.documentElement.outerHTML);var eb=emails.length?"\\n\\nEMAILS FOUND: "+emails.join(", ")+"\\n":"";var c=u+eb+"\\n\\n"+t;var msg=emails.length>0?("\\u2713 Copied "+emails.length+" email"+(emails.length===1?"":"s")+" and full profile.\\n\\nPaste into the CRM AI Assistant."):"\\u26A0 No email found on page.\\n\\nProfile copied without email. If Apollo shows an email, click it to fully reveal (not just hover) then run this again.";navigator.clipboard.writeText(c).then(function(){alert(msg)}).catch(function(){var ta=document.createElement("textarea");ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);alert(msg)})})();`;
 
 export default function Tools() {
   const [copied, setCopied] = useState(false);
@@ -28,9 +28,12 @@ export default function Tools() {
         <h1 className="text-4xl md:text-5xl font-extrabold text-ink mb-3 tracking-tight uppercase">
           Auto-Capture Profiles<span className="text-teal">.</span>
         </h1>
-        <p className="text-muted text-sm mb-10">
+        <p className="text-muted text-sm mb-3">
           One-time setup. After this, capturing any LinkedIn profile takes one click.
         </p>
+        <div className="bg-pink/10 border border-pink/30 rounded-card p-4 text-xs text-muted mb-10">
+          <span className="text-pink font-bold uppercase tracking-wider">Update:</span> the bookmarklet was upgraded to scan Shadow DOM + iframes for Apollo emails. If you installed it earlier, <span className="text-ink font-semibold">delete the old bookmark and drag the new one below</span>.
+        </div>
 
         <div className="bg-bg-card border border-border rounded-card p-7 mb-8">
           <div className="flex items-center gap-3 mb-4">
@@ -81,8 +84,29 @@ export default function Tools() {
           </ol>
 
           <div className="ml-10 mt-5 bg-teal/10 border border-teal/30 rounded-card p-4 text-xs text-muted">
-            <span className="text-teal font-bold uppercase tracking-wider">Tip:</span> the bookmarklet scans the entire page for email patterns, so any email Apollo has revealed (visible or in hidden containers) will be caught. If Apollo shows nothing, the tool still copies the profile — you just save without an email.
+            <span className="text-teal font-bold uppercase tracking-wider">Tip:</span> the bookmarklet scans regular DOM, Shadow DOM, and same-origin iframes for email patterns. It filters out LinkedIn system emails and common noise automatically.
           </div>
+        </div>
+
+        <div className="bg-bg-card border border-border rounded-card p-7 mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="bg-pink text-white rounded-pill w-7 h-7 flex items-center justify-center text-xs font-extrabold">!</span>
+            <h2 className="text-xl font-extrabold text-ink uppercase tracking-tight">Apollo email not being caught?</h2>
+          </div>
+          <ul className="text-muted text-sm ml-10 space-y-3">
+            <li>
+              <span className="text-ink font-semibold">Click the email in Apollo's panel to fully reveal it.</span> Hovering isn't enough — Apollo often keeps the plaintext hidden until you click. Look for "Access email" or a masked email like <span className="font-mono text-xs">j*****@company.com</span> and click to reveal the real one.
+            </li>
+            <li>
+              <span className="text-ink font-semibold">Wait until the email is visible on the page as text</span> before clicking ⚡ Send to Pulse CRM. If Apollo shows it in a tooltip that disappears when you move the mouse, keep the tooltip open or click into their contact card so the email persists.
+            </li>
+            <li>
+              <span className="text-ink font-semibold">If Apollo just says "No email available",</span> there is nothing to capture — the tool will still copy the profile and warn you. Save the contact without an email; you can add it manually later via Edit.
+            </li>
+            <li>
+              <span className="text-ink font-semibold">Cross-origin iframes</span> (rare) can't be read from the outside. If Apollo renders inside such an iframe, copy the email manually into the CRM Edit modal.
+            </li>
+          </ul>
         </div>
 
         <div className="bg-bg-card border border-border rounded-card p-7">
