@@ -192,6 +192,7 @@ export default function ProfileDashboard() {
       role: aiResult.role,
       industry: aiResult.industry,
       country: aiResult.country || null,
+      linkedin_url: aiResult.linkedin_url || null,
       email: aiResult.email || null,
       email_source: aiResult.email ? "apollo" : null,
       source: aiSource,
@@ -578,6 +579,18 @@ export default function ProfileDashboard() {
                 <ResultField label="Industry" value={aiResult.industry} />
                 <ResultField label="Country" value={aiResult.country} />
                 <div className="col-span-2 md:col-span-4">
+                  <div className="text-[10px] text-muted uppercase tracking-widest font-semibold mb-1">LinkedIn URL</div>
+                  <div className="text-sm font-medium text-ink">
+                    {aiResult.linkedin_url ? (
+                      <a href={aiResult.linkedin_url} target="_blank" rel="noreferrer" className="text-teal hover:text-teal-hover underline break-all">
+                        {aiResult.linkedin_url}
+                      </a>
+                    ) : (
+                      <span className="text-muted font-normal">— (none found in pasted text)</span>
+                    )}
+                  </div>
+                </div>
+                <div className="col-span-2 md:col-span-4">
                   <div className="text-[10px] text-muted uppercase tracking-widest font-semibold mb-1 flex items-center gap-2">
                     Email
                     {aiResult.email && <span className="inline-block px-2 py-0.5 rounded-pill text-[10px] font-bold text-black" style={{ backgroundColor: "#FBFF3A" }}>APOLLO</span>}
@@ -838,11 +851,18 @@ export default function ProfileDashboard() {
             {visibleContacts.map((c) => (
               <tr key={c.id} className="border-t border-border hover:bg-bg-hover/40 transition">
                 <td className="px-3 py-3">
-                  <div className="font-bold text-ink text-sm whitespace-nowrap">{c.name}</div>
-                  {c.linkedin_url && (
-                    <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="text-[9px] text-teal hover:text-teal-hover uppercase tracking-wider font-semibold">
-                      profile ↗
+                  {c.linkedin_url ? (
+                    <a
+                      href={c.linkedin_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-ink hover:text-teal text-sm whitespace-nowrap inline-flex items-center gap-1 transition"
+                    >
+                      {c.name}
+                      <span className="text-teal text-[10px]">↗</span>
                     </a>
+                  ) : (
+                    <div className="font-bold text-ink text-sm whitespace-nowrap">{c.name}</div>
                   )}
                 </td>
                 <td className="px-3 py-3 text-ink font-medium text-sm">
