@@ -360,10 +360,24 @@ export default function ProfileDashboard() {
   const engaged = periodContacts.filter((c) => c.source === "post_engagement").length;
   const highScore = periodContacts.filter((c) => c.score >= 70).length;
 
+  const DM_SENT_STAGES = ["dm_sent", "replied", "interested", "converted", "cold"];
+  const REPLIED_STAGES = ["replied", "interested", "converted"];
+  const INTERESTED_STAGES = ["interested", "converted"];
+
+  const cumDmSent = periodContacts.filter((c) => DM_SENT_STAGES.includes(c.stage)).length;
+  const cumReplied = periodContacts.filter((c) => REPLIED_STAGES.includes(c.stage)).length;
+  const cumInterested = periodContacts.filter((c) => INTERESTED_STAGES.includes(c.stage)).length;
+
   const visibleContacts = !filter
     ? periodContacts
     : filter === "engagement"
     ? periodContacts.filter((c) => c.source === "post_engagement")
+    : filter === "dm_sent"
+    ? periodContacts.filter((c) => DM_SENT_STAGES.includes(c.stage))
+    : filter === "replied"
+    ? periodContacts.filter((c) => REPLIED_STAGES.includes(c.stage))
+    : filter === "interested"
+    ? periodContacts.filter((c) => INTERESTED_STAGES.includes(c.stage))
     : periodContacts.filter((c) => c.stage === filter);
 
   if (loading) {
@@ -470,9 +484,9 @@ export default function ProfileDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-10">
           <StatCard label="Total" value={total} active={filter === null} onClick={() => setFilter(null)} />
           <StatCard label="From Engagement" value={engaged} active={filter === "engagement"} onClick={() => setFilter(filter === "engagement" ? null : "engagement")} />
-          <StatCard label="DM Sent" value={byStage.dm_sent} accent="teal" active={filter === "dm_sent"} onClick={() => setFilter(filter === "dm_sent" ? null : "dm_sent")} />
-          <StatCard label="Replied" value={byStage.replied} accent="pink" active={filter === "replied"} onClick={() => setFilter(filter === "replied" ? null : "replied")} />
-          <StatCard label="Interested" value={byStage.interested} accent="teal" active={filter === "interested"} onClick={() => setFilter(filter === "interested" ? null : "interested")} />
+          <StatCard label="DM Sent" value={cumDmSent} accent="teal" active={filter === "dm_sent"} onClick={() => setFilter(filter === "dm_sent" ? null : "dm_sent")} />
+          <StatCard label="Replied" value={cumReplied} accent="pink" active={filter === "replied"} onClick={() => setFilter(filter === "replied" ? null : "replied")} />
+          <StatCard label="Interested" value={cumInterested} accent="teal" active={filter === "interested"} onClick={() => setFilter(filter === "interested" ? null : "interested")} />
           <StatCard label="Converted" value={byStage.converted} accent="teal-strong" active={filter === "converted"} onClick={() => setFilter(filter === "converted" ? null : "converted")} />
         </div>
 
